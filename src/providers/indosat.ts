@@ -415,35 +415,74 @@ export class IndosatProvider extends TelcoProvider {
     }
 
     try {
-      const orderRes = await this.request('/order/v2/create', {
-        product_id: packageId,
-        msisdn: this.session.msisdn,
-        payment_method: paymentMethod.toUpperCase()
-      });
+      const isBalance = paymentMethod.toUpperCase() === 'PULSA' || paymentMethod.toUpperCase() === 'BALANCE';
+      
+      if (isBalance) {
+        const activatePayload = {
+          transtype: 'package',
+          operationtype: 'buy',
+          paymentchannel: 'BALANCE',
+          offerid: packageId,
+          tomsisdn: this.session.msisdn,
+          type: 'BALANCE',
+          balancereceive: '0'
+        };
 
-      if (orderRes.body?.status !== '0') {
+        const res = await this.request('/packages/activate', activatePayload);
+        if (res.body?.status === '0') {
+          return {
+            success: true,
+            transactionId: res.body?.transid,
+            paymentMethod: 'PULSA',
+            status: 'SUCCESS',
+            message: 'Pembelian paket berhasil menggunakan pulsa!',
+            raw: res.body
+          };
+        }
+
         return {
           success: false,
-          paymentMethod,
+          paymentMethod: 'PULSA',
           status: 'FAILED',
-          message: orderRes.body?.message || 'Failed to create myIM3 order'
+          message: res.body?.data?.protip || res.body?.message || 'Gagal memotong pulsa utama. Pastikan saldo pulsa mencukupi.',
+          raw: res.body
         };
       }
 
-      const data = orderRes.body.data;
-      const isSuccess = paymentMethod.toUpperCase() === 'PULSA';
+      // QRIS / E-Wallet
+      const payload = {
+        transtype: 'package',
+        operationtype: 'buy',
+        paymentchannel: paymentMethod.toUpperCase(),
+        offerid: packageId,
+        tomsisdn: this.session.msisdn,
+        type: paymentMethod.toUpperCase() === 'QRIS' ? 'QRIS' : 'WALLET',
+        balancereceive: '0'
+      };
+
+      const res = await this.request('/payment/payment', payload);
+      const data = res.body?.data?.SendPaymentResp || res.body?.data;
+
+      if (res.body?.status === '0' && data) {
+        return {
+          success: true,
+          transactionId: data.uniqueTransactionCode || res.body.transid,
+          paymentMethod,
+          status: 'PENDING',
+          qrisData: data.actionData,
+          amount: Number(data.amount || 0),
+          amountFormatted: `Rp ${Number(data.amount || 0).toLocaleString('id-ID')}`,
+          message: 'Order pembayaran QRIS berhasil dibuat!',
+          raw: data
+        };
+      }
 
       return {
-        success: true,
-        transactionId: data?.transid,
+        success: false,
         paymentMethod,
-        status: isSuccess ? 'SUCCESS' : 'PENDING',
-        qrisData: data?.qr_string || data?.qr_code,
-        checkoutUrl: data?.payment_url,
-        amount: Number(data?.total_amount || data?.amount || 0),
-        amountFormatted: `Rp ${Number(data?.total_amount || data?.amount || 0).toLocaleString('id-ID')}`,
-        message: isSuccess ? 'Paket Freedom myIM3 berhasil dibeli!' : 'Order dibuat. Silakan bayar.',
-        raw: data
+        status: 'FAILED',
+        message: res.body?.message || 'Metode pembayaran tidak didukung untuk paket ini (Paket ini memerlukan pulsa utama).',
+        raw: res.body
       };
     } catch (e: any) {
       return {
@@ -459,33 +498,63 @@ export class IndosatProvider extends TelcoProvider {
     try {
       if (!this.session?.authToken) await this.initGuest();
 
-      const reloadRes = await this.request('/reload/order/v1', {
-        msisdn: this.session?.msisdn || '',
-        amount,
-        payment_method: paymentMethod.toUpperCase()
-      });
+      const denomMap: Record<number, string> = {
+        10000: '14',
+        13000: '16',
+        16000: '17',
+        21000: '18',
+        25000: '2',
+        26000: '2',
+        30000: '19',
+        31000: '19',
+        36000: '28',
+        40500: '20',
+        50000: '4',
+        100000: '5'
+      };
 
-      if (reloadRes.body?.status !== '0') {
+      const offerid = denomMap[amount] || '4'; // default to 50k denom id
+      const payload = {
+        transtype: 'reload',
+        operationtype: 'buy',
+        paymentchannel: paymentMethod.toUpperCase(),
+        offerid,
+        keyword: '',
+        shortcode: '',
+        tomsisdn: this.session?.msisdn || '',
+        normalprice: String(amount),
+        discountprice: '0',
+        packagename: String(amount),
+        name: '',
+        transid: '',
+        walletmsisdn: '',
+        type: paymentMethod.toUpperCase() === 'QRIS' ? 'QRIS' : 'WALLET',
+        balancereceive: '0'
+      };
+
+      const res = await this.request('/payment/payment', payload);
+      const pData = res.body?.data?.SendPaymentResp || res.body?.data;
+
+      if (res.body?.status === '0' && pData) {
         return {
-          success: false,
-          amount,
+          success: true,
+          transactionId: pData.uniqueTransactionCode || res.body.transid,
+          amount: Number(pData.amount || amount),
           paymentMethod,
-          status: 'FAILED',
-          message: reloadRes.body?.message || 'Failed to create IM3 reload order'
+          status: 'PENDING',
+          qrisData: pData.actionData,
+          message: `QRIS Isi Ulang Pulsa Rp ${amount.toLocaleString('id-ID')} berhasil dibuat!`,
+          raw: pData
         };
       }
 
-      const data = reloadRes.body.data;
       return {
-        success: true,
-        transactionId: data?.transid,
+        success: false,
         amount,
         paymentMethod,
-        status: 'PENDING',
-        qrisData: data?.qr_string,
-        checkoutUrl: data?.payment_url,
-        message: `Isi ulang pulsa myIM3 Rp ${amount.toLocaleString('id-ID')} dibuat.`,
-        raw: data
+        status: 'FAILED',
+        message: res.body?.message || 'Gagal membuat QRIS isi ulang pulsa',
+        raw: res.body
       };
     } catch (e: any) {
       return {
