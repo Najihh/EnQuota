@@ -144,7 +144,6 @@ export class TelkomselProvider extends TelcoProvider {
     }
 
     try {
-      // Local number for telbot e.g. 812xxxxxxxx
       const localPhone = norm.clean;
       const res = await this.callMcpTool('login', { phone: localPhone });
 
@@ -197,25 +196,52 @@ export class TelkomselProvider extends TelcoProvider {
   public async getProfile(): Promise<ProfileResult> {
     try {
       const res = await this.callMcpTool('get_profile');
-      const data = typeof res === 'object' ? res : {};
+      let name = 'Telkomsel Subscriber';
+      let balanceNum = 0;
+      let activeUntil = '-';
+      let points = 0;
+      let tier = 'Member';
+      let phone = this.session?.phone || '';
 
-      const name = data.name || data.Name || 'Telkomsel Subscriber';
-      const balanceStr = data.balance || data.Balance || '0';
-      const balanceNum = typeof balanceStr === 'number' ? balanceStr : Number(balanceStr.replace(/[^0-9]/g, '')) || 0;
-      const points = data.points || data.loyalty_points || data.LoyaltyPoints || '0';
+      if (typeof res === 'string') {
+        const nameMatch = res.match(/•\s*\*Nama:\*\s*([^\n]*)/);
+        if (nameMatch && nameMatch[1].trim()) name = nameMatch[1].trim();
+
+        const phoneMatch = res.match(/•\s*\*Nomor:\*\s*([^\n]+)/);
+        if (phoneMatch && phoneMatch[1].trim()) phone = phoneMatch[1].trim();
+
+        const pulsaMatch = res.match(/•\s*\*Pulsa:\*\s*Rp([\d.,]+)/);
+        if (pulsaMatch) balanceNum = Number(pulsaMatch[1].replace(/[^0-9]/g, '')) || 0;
+
+        const activeMatch = res.match(/•\s*\*Masa Aktif:\*\s*([^\n]+)/);
+        if (activeMatch) activeUntil = activeMatch[1].trim();
+
+        const tierMatch = res.match(/•\s*\*Tier:\*\s*([^\n]+)/);
+        if (tierMatch) tier = tierMatch[1].trim();
+
+        const poinMatch = res.match(/•\s*\*Poin:\*\s*([\d]+)/);
+        if (poinMatch) points = Number(poinMatch[1]) || 0;
+      } else if (typeof res === 'object' && res !== null) {
+        name = res.name || res.Name || name;
+        const balanceStr = res.balance || res.Balance || '0';
+        balanceNum = typeof balanceStr === 'number' ? balanceStr : Number(balanceStr.replace(/[^0-9]/g, '')) || 0;
+        points = Number(res.points || res.loyalty_points || res.LoyaltyPoints) || 0;
+        tier = res.tier || res.LoyaltyTier || tier;
+        activeUntil = res.active_until || res.BalanceExpiry || activeUntil;
+      }
 
       return {
         success: true,
-        phone: this.session?.phone || data.phone || '',
+        phone,
         provider: 'TELKOMSEL',
         name,
         balance: balanceNum,
         balanceFormatted: `Rp ${balanceNum.toLocaleString('id-ID')}`,
-        activeUntil: data.active_until || data.BalanceExpiry || '-',
+        activeUntil,
         loyaltyPoints: {
           name: 'Telkomsel Poin',
-          points: Number(points) || 0,
-          tier: data.tier || data.LoyaltyTier || 'Member'
+          points,
+          tier
         },
         raw: res
       };
@@ -234,7 +260,20 @@ export class TelkomselProvider extends TelcoProvider {
       const res = await this.callMcpTool('get_quota');
       const items: QuotaItem[] = [];
 
-      if (typeof res === 'object' && res !== null) {
+      if (typeof res === 'string') {
+        const lines = res.split('\n');
+        for (const line of lines) {
+          const itemMatch = line.match(/•\s*([^:]+):\s*\*([^*]+)\*(?:\s*\(exp:\s*([^)]+)\))?/);
+          if (itemMatch) {
+            items.push({
+              name: itemMatch[1].trim(),
+              type: 'MAIN',
+              remainingFormatted: itemMatch[2].trim(),
+              validUntil: itemMatch[3] ? itemMatch[3].trim() : '-'
+            });
+          }
+        }
+      } else if (typeof res === 'object' && res !== null) {
         if (Array.isArray(res.groups || res.Groups)) {
           const groups = res.groups || res.Groups;
           for (const g of groups) {
@@ -250,11 +289,13 @@ export class TelkomselProvider extends TelcoProvider {
         }
       }
 
+      const totalFormatted = items.map(i => `${i.name}: ${i.remainingFormatted}`).join(', ') || 'Active Quota';
+
       return {
         success: true,
         phone: this.session?.phone || '',
         provider: 'TELKOMSEL',
-        totalRemainingFormatted: items.map(i => `${i.name}: ${i.remainingFormatted}`).join(', ') || 'Active Quota',
+        totalRemainingFormatted: totalFormatted,
         items,
         raw: res
       };
@@ -272,18 +313,43 @@ export class TelkomselProvider extends TelcoProvider {
   public async getPackages(keyword?: string, category?: string): Promise<PackageListResult> {
     try {
       const res = await this.callMcpTool('get_recommended_offers');
-      const list = Array.isArray(res) ? res : (res?.offers || res?.data || []);
+      let packages: PackageItem[] = [];
 
-      let packages: PackageItem[] = list.map((p: any) => ({
-        id: p.offer_id || p.id || p.code,
-        name: p.name || p.title || 'Paket Telkomsel',
-        price: Number(p.price || 0),
-        priceFormatted: `Rp ${Number(p.price || 0).toLocaleString('id-ID')}`,
-        quotaFormatted: p.quota || p.data_allowance || p.description,
-        validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
-        description: p.description,
-        category: p.category || 'Recommended'
-      }));
+      if (typeof res === 'string') {
+        const blocks = res.split(/(?=\*\d+\.\s*)/);
+        for (const block of blocks) {
+          const nameMatch = block.match(/\*\d+\.\s*([^*]+)\*/);
+          const priceMatch = block.match(/💰\s*Rp([\d.,]+)/);
+          const validityMatch = block.match(/⏳\s*([^\n•]+)/);
+          const quotaMatch = block.match(/📊\s*([^\n]+)/);
+          const idMatch = block.match(/🆔\s*ID:\s*`([^`]+)`/);
+
+          if (idMatch && nameMatch) {
+            const price = Number(priceMatch?.[1].replace(/[^0-9]/g, '')) || 0;
+            packages.push({
+              id: idMatch[1].trim(),
+              name: nameMatch[1].trim(),
+              price,
+              priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+              quotaFormatted: quotaMatch?.[1]?.trim(),
+              validityFormatted: validityMatch?.[1]?.trim(),
+              category: 'Recommended'
+            });
+          }
+        }
+      } else {
+        const list = Array.isArray(res) ? res : (res?.offers || res?.data || []);
+        packages = list.map((p: any) => ({
+          id: p.offer_id || p.id || p.code,
+          name: p.name || p.title || 'Paket Telkomsel',
+          price: Number(p.price || 0),
+          priceFormatted: `Rp ${Number(p.price || 0).toLocaleString('id-ID')}`,
+          quotaFormatted: p.quota || p.data_allowance || p.description,
+          validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
+          description: p.description,
+          category: p.category || 'Recommended'
+        }));
+      }
 
       if (keyword) {
         const kw = keyword.toLowerCase();
