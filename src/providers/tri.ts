@@ -494,35 +494,74 @@ export class TriProvider extends TelcoProvider {
     }
 
     try {
-      const orderRes = await this.request('/order/v2/create', {
-        product_id: packageId,
-        msisdn: this.session.msisdn,
-        payment_method: paymentMethod.toUpperCase()
-      });
+      const isBalance = paymentMethod.toUpperCase() === 'PULSA' || paymentMethod.toUpperCase() === 'BALANCE';
 
-      if (!orderRes.body || orderRes.body.status !== '0') {
+      if (isBalance) {
+        const activatePayload = {
+          transtype: 'package',
+          operationtype: 'buy',
+          paymentchannel: 'BALANCE',
+          offerid: packageId,
+          tomsisdn: this.session.msisdn,
+          type: 'BALANCE',
+          balancereceive: '0'
+        };
+
+        const res = await this.request('/packages/activate', activatePayload);
+        if (res.body?.status === '0') {
+          return {
+            success: true,
+            transactionId: res.body?.transid,
+            paymentMethod: 'PULSA',
+            status: 'SUCCESS',
+            message: 'Pembelian paket Tri berhasil menggunakan pulsa!',
+            raw: res.body
+          };
+        }
+
         return {
           success: false,
-          paymentMethod,
+          paymentMethod: 'PULSA',
           status: 'FAILED',
-          message: orderRes.body?.message || 'Failed to create Tri order'
+          message: res.body?.data?.protip || res.body?.message || 'Gagal memotong pulsa utama. Pastikan saldo pulsa mencukupi.',
+          raw: res.body
         };
       }
 
-      const data = orderRes.body.data;
-      const isSuccess = paymentMethod.toUpperCase() === 'PULSA';
+      // QRIS / E-wallet
+      const payload = {
+        transtype: 'package',
+        operationtype: 'buy',
+        paymentchannel: paymentMethod.toUpperCase(),
+        offerid: packageId,
+        tomsisdn: this.session.msisdn,
+        type: paymentMethod.toUpperCase() === 'QRIS' ? 'QRIS' : 'WALLET',
+        balancereceive: '0'
+      };
+
+      const res = await this.request('/esb/initiatepayment', payload);
+      const data = res.body?.data?.SendPaymentResp || res.body?.data;
+
+      if (res.body?.status === '0' && data) {
+        return {
+          success: true,
+          transactionId: data.uniqueTransactionCode || res.body.transid,
+          paymentMethod,
+          status: 'PENDING',
+          qrisData: data.actionData,
+          amount: Number(data.amount || 0),
+          amountFormatted: `Rp ${Number(data.amount || 0).toLocaleString('id-ID')}`,
+          message: 'Order QRIS Tri berhasil dibuat!',
+          raw: data
+        };
+      }
 
       return {
-        success: true,
-        transactionId: data?.transid || data?.order_id,
+        success: false,
         paymentMethod,
-        status: isSuccess ? 'SUCCESS' : 'PENDING',
-        qrisData: data?.qr_string || data?.qr_code,
-        checkoutUrl: data?.payment_url || data?.redirect_url,
-        amount: Number(data?.total_amount || data?.amount || 0),
-        amountFormatted: `Rp ${Number(data?.total_amount || data?.amount || 0).toLocaleString('id-ID')}`,
-        message: isSuccess ? 'Paket Tri berhasil dibeli menggunakan pulsa!' : 'Order dibuat. Silakan selesaikan pembayaran.',
-        raw: data
+        status: 'FAILED',
+        message: res.body?.message || 'Metode pembayaran QRIS tidak didukung untuk paket ini (Paket ini memerlukan pulsa utama).',
+        raw: res.body
       };
     } catch (e: any) {
       return {
@@ -538,33 +577,47 @@ export class TriProvider extends TelcoProvider {
     try {
       if (!this.session?.authToken) await this.initGuest();
 
-      const reloadRes = await this.request('/reload/order/v1', {
-        msisdn: this.session?.msisdn || '',
-        amount: amount,
-        payment_method: paymentMethod.toUpperCase()
-      });
+      const payload = {
+        transtype: 'reload',
+        operationtype: 'buy',
+        paymentchannel: paymentMethod.toUpperCase(),
+        offerid: String(amount),
+        keyword: '',
+        shortcode: '',
+        tomsisdn: this.session?.msisdn || '',
+        normalprice: String(amount),
+        discountprice: '0',
+        packagename: String(amount),
+        name: '',
+        transid: '',
+        walletmsisdn: '',
+        type: paymentMethod.toUpperCase() === 'QRIS' ? 'QRIS' : 'WALLET',
+        balancereceive: '0'
+      };
 
-      if (!reloadRes.body || reloadRes.body.status !== '0') {
+      const res = await this.request('/esb/initiatepayment', payload);
+      const data = res.body?.data?.SendPaymentResp || res.body?.data;
+
+      if (res.body?.status === '0' && data) {
         return {
-          success: false,
+          success: true,
+          transactionId: data.uniqueTransactionCode || res.body.transid,
           amount,
           paymentMethod,
-          status: 'FAILED',
-          message: reloadRes.body?.message || 'Failed to create reload order'
+          status: 'PENDING',
+          qrisData: data.actionData,
+          message: `QRIS Isi Ulang Pulsa Tri Rp ${amount.toLocaleString('id-ID')} berhasil dibuat!`,
+          raw: data
         };
       }
 
-      const data = reloadRes.body.data;
       return {
-        success: true,
-        transactionId: data?.transid,
+        success: false,
         amount,
         paymentMethod,
-        status: 'PENDING',
-        qrisData: data?.qr_string || data?.qr_code,
-        checkoutUrl: data?.payment_url,
-        message: `Isi ulang pulsa Tri Rp ${amount.toLocaleString('id-ID')} dibuat.`,
-        raw: data
+        status: 'FAILED',
+        message: res.body?.message || 'Gagal membuat QRIS isi ulang pulsa Tri',
+        raw: res.body
       };
     } catch (e: any) {
       return {
