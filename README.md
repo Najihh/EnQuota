@@ -61,12 +61,12 @@ When running as an MCP server, `EnQuota` exposes the following unified tools pre
 
 #### Linux & macOS:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Najihh/EnQuota/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Najihh/EnQuota/release/install.sh | bash
 ```
 
 #### Windows (PowerShell as Administrator or User):
 ```powershell
-irm https://raw.githubusercontent.com/Najihh/EnQuota/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Najihh/EnQuota/release/install.ps1 | iex
 ```
 
 ---
