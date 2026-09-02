@@ -305,18 +305,43 @@ export class TriProvider extends TelcoProvider {
       const dash = dashRes.body?.data;
       const packages = dash?.packdata?.packageslist || [];
 
-      const items: QuotaItem[] = packages.map((p: any) => ({
-        name: p.packagename || p.name || 'Paket Internet',
-        type: 'MAIN',
-        remainingFormatted: p.total_quota || p.quota || '0 GB',
-        validUntil: p.expireddate || p.activeuntil || '-'
-      }));
+      const items: QuotaItem[] = [];
+      if (Array.isArray(packages)) {
+        packages.forEach((pkg: any) => {
+          if (Array.isArray(pkg.Quotas)) {
+            pkg.Quotas.forEach((q: any) => {
+              const rem = q.remainingQuota != null ? Number(q.remainingQuota) : Number(q.rawRemainingQuota || 0);
+              if (rem > 0) {
+                let remStr = `${rem} ${q.quotaUnit || 'MB'}`;
+                if (q.quotaUnit === 'MB' || q.benefitType === 'DATA') {
+                  if (rem >= 1024) {
+                    remStr = `${(rem / 1024).toFixed(2)} GB`;
+                  } else {
+                    remStr = `${rem} MB`;
+                  }
+                } else if (q.quotaUnit === 'SMS') {
+                  remStr = `${rem} SMS`;
+                }
+
+                items.push({
+                  name: `${pkg.PackageName || pkg.ServiceName} (${q.name || q.description})`,
+                  type: q.benefitType || 'MAIN',
+                  remainingFormatted: remStr,
+                  validUntil: pkg.EndDate || pkg.expMsg || '-'
+                });
+              }
+            });
+          }
+        });
+      }
+
+      const totalRemaining = items.filter(i => i.remainingFormatted.includes('GB') || i.remainingFormatted.includes('MB')).map(i => `${i.name}: ${i.remainingFormatted}`).join(', ') || (items.length > 0 ? items.map(i => `${i.name}: ${i.remainingFormatted}`).join(', ') : '0 GB');
 
       return {
         success: true,
         phone: this.session.phone || this.session.msisdn,
         provider: 'TRI',
-        totalRemainingFormatted: items.map(i => `${i.name}: ${i.remainingFormatted}`).join(', ') || '0 GB',
+        totalRemainingFormatted: totalRemaining,
         items,
         raw: dash
       };
