@@ -175,17 +175,29 @@ export class ByuProvider extends TelcoProvider {
     const norm = normalizePhone(phone);
     return {
       success: true,
-      message: `by.U uses persistent Web Session / Ruby Token auth. If you have an active rubyToken or cookie, set it via session import, or trigger email/magic login flow. (Number: ${norm.national})`,
-      requireOtp: false,
+      message: `by.U uses persistent Web Session / Ruby Token auth. If you have an active rubyToken or cookie, submit it with eq_submit_otp(otp="<rubyToken>"). (Nomor: ${norm.national})`,
+      requireOtp: true,
       extra: { msisdn: norm.international }
     };
   }
 
   public async submitOtp(otp: string, transId?: string, phone?: string): Promise<OtpResult> {
-    // If rubyToken passed as otp/token
+    // If rubyToken or JWT passed as otp/token
     if (otp.length > 20) {
       this.rubyToken = otp;
       const norm = phone ? normalizePhone(phone) : { international: '', national: '' };
+      
+      // Fetch initial account details to verify token
+      try {
+        const detailsRes = await this.request('/v2/service-account/details', { method: 'GET' });
+        const item = detailsRes.body?.result?.data?.[0];
+        if (item) {
+          this.customerId = item.customerId || '';
+          this.billingAccountId = item.billingAccountId || '';
+          this.serviceAccountId = item.serviceAccountId || '';
+        }
+      } catch {}
+
       const newSession: TelcoSession = {
         phone: norm.national || this.session?.phone || '',
         msisdn: norm.international || this.session?.msisdn || '',
@@ -197,7 +209,9 @@ export class ByuProvider extends TelcoProvider {
         cookies: this.cookies,
         extra: {
           hmacSecretKey: this.hmacSecretKey,
-          customerId: this.customerId
+          customerId: this.customerId,
+          billingAccountId: this.billingAccountId,
+          serviceAccountId: this.serviceAccountId
         },
         updatedAt: new Date().toISOString()
       };
@@ -212,41 +226,44 @@ export class ByuProvider extends TelcoProvider {
 
     return {
       success: false,
-      message: 'by.U authentication requires Ruby Token or active session token.'
+      message: 'by.U authentication requires the rubyToken JWT string from your by.U web session.'
     };
   }
 
   public async getProfile(): Promise<ProfileResult> {
     try {
-      const [accRes, loyaltyRes] = await Promise.all([
-        this.request('/v1/profile/details', { method: 'GET' }),
-        this.request('/v1/loyalty/details', { method: 'GET' })
-      ]);
+      const detailsRes = await this.request('/v2/service-account/details', { method: 'GET' });
+      const item = detailsRes.body?.result?.data?.[0];
+      if (item) {
+        this.customerId = item.customerId || this.customerId;
+        this.billingAccountId = item.billingAccountId || this.billingAccountId;
+        this.serviceAccountId = item.serviceAccountId || this.serviceAccountId;
+      }
 
-      const acc = accRes.body?.response || accRes.body?.data || accRes.body;
-      const loyalty = loyaltyRes.body?.response || loyaltyRes.body?.data || loyaltyRes.body;
+      let uCoin = 0;
+      if (this.customerId) {
+        try {
+          const loyaltyRes = await this.request(`/v1/loyalty/member-details/${encodeURIComponent(this.customerId)}`, { method: 'GET' });
+          uCoin = Number(loyaltyRes.body?.result?.totalPoints || loyaltyRes.body?.result?.points || 0);
+        } catch {}
+      }
 
-      const balanceVal = Number(acc?.credit_balance || acc?.balance || 0);
-      const uCoin = Number(loyalty?.points_balance || loyalty?.uCoin || 0);
-
-      if (acc?.customer_id) this.customerId = acc.customer_id;
-      if (acc?.billing_account_id) this.billingAccountId = acc.billing_account_id;
-      if (acc?.service_account_id) this.serviceAccountId = acc.service_account_id;
+      const balanceVal = Number(item?.creditBalance || item?.balance || 0);
 
       return {
         success: true,
-        phone: this.session?.phone || acc?.msisdn || '',
+        phone: this.session?.phone || item?.msisdn || '',
         provider: 'BYU',
-        name: acc?.name || acc?.first_name || 'by.U Subscriber',
+        name: item?.customerName || item?.name || 'by.U Subscriber',
         balance: balanceVal,
         balanceFormatted: `Rp ${balanceVal.toLocaleString('id-ID')}`,
-        activeUntil: acc?.valid_until || acc?.expiry_date || '-',
+        activeUntil: item?.expiryDate || item?.validUntil || '-',
         loyaltyPoints: {
           name: 'uCoin',
           points: uCoin,
           tier: 'by.U Crew'
         },
-        raw: { acc, loyalty }
+        raw: { item }
       };
     } catch (e: any) {
       return {
@@ -260,14 +277,24 @@ export class ByuProvider extends TelcoProvider {
 
   public async getQuota(): Promise<QuotaResult> {
     try {
-      const usageRes = await this.request('/v1/usage/summary', { method: 'GET' });
-      const usage = usageRes.body?.response || usageRes.body?.data || [];
+      if (!this.billingAccountId) {
+        const detailsRes = await this.request('/v2/service-account/details', { method: 'GET' });
+        const item = detailsRes.body?.result?.data?.[0];
+        if (item) {
+          this.billingAccountId = item.billingAccountId;
+          this.serviceAccountId = item.serviceAccountId;
+        }
+      }
+
+      const acc = this.billingAccountId || this.serviceAccountId;
+      const usageRes = await this.request(`/v2/account/usage?accountNumber=${encodeURIComponent(acc)}`, { method: 'GET' });
+      const usage = usageRes.body?.result?.data || usageRes.body?.response || [];
 
       const items: QuotaItem[] = (Array.isArray(usage) ? usage : []).map((u: any) => ({
-        name: u.display_name || u.name || 'Kuota Internet by.U',
+        name: u.displayName || u.name || 'Kuota by.U',
         type: 'MAIN',
-        remainingFormatted: u.remaining_quota_formatted || `${u.remaining_quota || 0} MB`,
-        validUntil: u.expired_date || u.valid_until || '-'
+        remainingFormatted: u.remainingQuotaFormatted || `${u.remainingQuota || 0} MB`,
+        validUntil: u.expiryDate || u.validUntil || '-'
       }));
 
       return {
@@ -291,29 +318,40 @@ export class ByuProvider extends TelcoProvider {
 
   public async getPackages(keyword?: string, category?: string): Promise<PackageListResult> {
     try {
-      const planRes = await this.request('/v1/catalog/plans', { method: 'GET' });
-      const list = planRes.body?.response?.plans || planRes.body?.data || [];
+      const planRes = await this.request('/v1/items/grouped?productCategory=prepaid', { method: 'GET' });
+      const groups = planRes.body?.result?.data || [];
+      const packages: PackageItem[] = [];
 
-      let packages: PackageItem[] = (Array.isArray(list) ? list : []).map((p: any) => ({
-        id: p.plan_id || p.id || p.code,
-        name: p.display_name || p.name,
-        price: Number(p.price || 0),
-        priceFormatted: `Rp ${Number(p.price || 0).toLocaleString('id-ID')}`,
-        quotaFormatted: p.data_allowance ? `${p.data_allowance} GB` : p.description,
-        validityFormatted: p.validity_days ? `${p.validity_days} Hari` : undefined,
-        description: p.description,
-        category: p.category || 'by.U Plan'
-      }));
+      if (Array.isArray(groups)) {
+        groups.forEach((g: any) => {
+          if (Array.isArray(g.items)) {
+            g.items.forEach((it: any) => {
+              const price = Number(it.price || it.tariff || 0);
+              packages.push({
+                id: it.id || it.sku || it.itemCode,
+                name: it.displayName || it.name,
+                price,
+                priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+                quotaFormatted: it.dataAllowance || it.benefit,
+                validityFormatted: it.validity ? `${it.validity} Hari` : undefined,
+                description: it.description,
+                category: g.groupName || 'by.U Plan'
+              });
+            });
+          }
+        });
+      }
 
+      let filtered = packages;
       if (keyword) {
         const kw = keyword.toLowerCase();
-        packages = packages.filter(p => p.name.toLowerCase().includes(kw) || (p.description && p.description.toLowerCase().includes(kw)));
+        filtered = packages.filter(p => p.name.toLowerCase().includes(kw) || (p.description && p.description.toLowerCase().includes(kw)));
       }
 
       return {
         success: true,
         provider: 'BYU',
-        packages,
+        packages: filtered,
         raw: planRes.body
       };
     } catch (e: any) {
@@ -335,23 +373,23 @@ export class ByuProvider extends TelcoProvider {
       };
 
       const signature = await this.signPayload(orderPayload);
-      const res = await this.request('/v1/order/create', {
+      const res = await this.request('/v3/orders', {
         method: 'POST',
         body: orderPayload,
-        headers: { 'x-signature': signature }
+        headers: { 'X-Signature': signature }
       });
 
-      const data = res.body?.response || res.body?.data;
+      const data = res.body?.response || res.body?.result;
       return {
         success: res.statusCode === 200 || res.statusCode === 201,
-        transactionId: data?.order_id,
+        transactionId: data?.orderId || data?.id,
         paymentMethod,
         status: paymentMethod.toUpperCase() === 'PULSA' ? 'SUCCESS' : 'PENDING',
-        qrisData: data?.qr_string,
-        checkoutUrl: data?.payment_url,
-        amount: Number(data?.total_amount || 0),
-        amountFormatted: `Rp ${Number(data?.total_amount || 0).toLocaleString('id-ID')}`,
-        message: `Order by.U dibuat. ID: ${data?.order_id || '-'}`,
+        qrisData: data?.qrString || data?.qrCode,
+        checkoutUrl: data?.paymentUrl,
+        amount: Number(data?.totalAmount || 0),
+        amountFormatted: `Rp ${Number(data?.totalAmount || 0).toLocaleString('id-ID')}`,
+        message: `Order by.U dibuat. ID: ${data?.orderId || '-'}`,
         raw: data
       };
     } catch (e: any) {
@@ -371,21 +409,21 @@ export class ByuProvider extends TelcoProvider {
         payment_method: paymentMethod.toUpperCase()
       };
       const signature = await this.signPayload(payload);
-      const res = await this.request('/v1/topup/create', {
+      const res = await this.request('/v3/orders', {
         method: 'POST',
         body: payload,
-        headers: { 'x-signature': signature }
+        headers: { 'X-Signature': signature }
       });
 
-      const data = res.body?.response || res.body?.data;
+      const data = res.body?.response || res.body?.result;
       return {
         success: res.statusCode === 200,
-        transactionId: data?.order_id,
+        transactionId: data?.orderId,
         amount,
         paymentMethod,
         status: 'PENDING',
-        qrisData: data?.qr_string,
-        checkoutUrl: data?.payment_url,
+        qrisData: data?.qrString,
+        checkoutUrl: data?.paymentUrl,
         message: `Isi ulang pulsa by.U Rp ${amount.toLocaleString('id-ID')} dibuat.`,
         raw: data
       };
