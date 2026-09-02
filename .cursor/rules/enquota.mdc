@@ -1,0 +1,13 @@
+---
+description: EnQuota Project Rules & Guidelines
+globs: ["src/**/*.ts", "package.json", "tsconfig.json"]
+alwaysApply: true
+---
+
+# EnQuota Cursor Rules
+
+- **Source of Truth**: Refer to `AGENTS.md` for full project conventions.
+- **Provider Architecture**: Operator logic lives in `src/providers/<operator>.ts`. All providers must inherit from `TelcoProvider`.
+- **Prefix Detection**: Prefix mappings must be registered in `PREFIX_MAP` in `src/detector.ts`.
+- **Tool Prefix**: MCP tool names are prefixed with `eq_`.
+- **Build Verification**: Run `npm run build` after editing to ensure zero type errors.

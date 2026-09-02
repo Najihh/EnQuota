@@ -1,0 +1,32 @@
+name: "✨ Feature Request"
+description: Suggest a new capability, MCP tool, or enhancement for EnQuota
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea for EnQuota? Let us know below!
+  - type: input
+    id: title
+    attributes:
+      label: Feature Summary
+      placeholder: "e.g. Add support for XL Axiata / AXISnet login"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific problem or limitation?
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe how you envision this feature working (CLI command, MCP tool, or workflow).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Any alternative approaches or workarounds you have considered.

@@ -3,6 +3,11 @@
 > **Unified Indonesian Telco MCP Server & Toolkit with Smart ISP Prefix Detection**  
 > Manage, check quota, explore packages, top up, and purchase data plans across **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, and **by.U** via Model Context Protocol (MCP) and interactive CLI.
 
+[![Build and Release](https://github.com/Najihh/EnQuota/actions/workflows/release.yml/badge.svg)](https://github.com/Najihh/EnQuota/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Technical Specification](https://img.shields.io/badge/Technical-Specification-orange.svg)](docs/TECHSPEC.md)
+[![Agentic Guidelines](https://img.shields.io/badge/Agentic-AGENTS.md-purple.svg)](AGENTS.md)
+
 ---
 
 ## 🌟 Key Features
@@ -11,10 +16,11 @@
 - **Multi-ISP Unified MCP Tools**: One clean interface (`eq_login`, `eq_get_quota`, `eq_get_profile`, `eq_buy_package`) for all telcos.
 - **Multi-Account Session Keystore**: Manage and persist sessions across multiple numbers and operators locally in `~/.enquota/sessions.json`.
 - **Full Telco API Capabilities**:
-  - 📊 Real-time Quota & Balance Checks (Main, Local, App, Night, Roaming).
+  - 📊 Real-time Quota & Balance Checks (Main, Local, App, Night, SMS, Roaming).
   - 🎁 Loyalty Points Dashboard (BonsTri, IMPoin, Telkomsel Poin, uCoin).
   - 🛒 Catalog Explorer & Personalized CVM/Promo Search.
   - 💳 Airtime Pulsa Auto-Deduct & Instant QRIS payment generation.
+- **Standalone Native Binaries**: Precompiled single executables available for Linux (x64/ARM64), macOS (Apple Silicon/Intel), and Windows.
 
 ---
 
@@ -32,7 +38,7 @@
 
 ## 🛠️ MCP Tools Reference
 
-When running as an MCP server, `EnQuota` exposes the following unified tools:
+When running as an MCP server, `EnQuota` exposes the following unified tools prefixed with `eq_`:
 
 | Tool | Parameters | Description |
 | :--- | :--- | :--- |
@@ -75,32 +81,49 @@ node dist/index.js quota
 node dist/index.js sessions
 ```
 
-### 2. Hermes Agent MCP Configuration
+### 2. Standalone Binary Installation
+
+Download the latest prebuilt executable from the [Releases](https://github.com/Najihh/EnQuota/releases) page:
+
+```bash
+# Linux x64
+curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-linux-amd64 -o enquota
+chmod +x enquota
+sudo mv enquota /usr/local/bin/
+
+# Run CLI or MCP
+enquota --mcp
+```
+
+### 3. Hermes Agent MCP Configuration
 
 Add `enquota` to your `~/.hermes/config.yaml`:
 
 ```yaml
 mcp_servers:
   enquota:
-    command: node
+    command: /usr/local/bin/enquota # or: node /path/to/EnQuota/dist/index.js
     args:
-      - /path/to/EnQuota/dist/index.js
       - --mcp
     enabled: true
 ```
 
-Or via `npx`:
+---
 
-```yaml
-mcp_servers:
-  enquota:
-    command: npx
-    args:
-      - -y
-      - enquota
-      - --mcp
-    enabled: true
-```
+## 🤖 AI Coding Agents & Rule Files
+
+This project adheres to the **`AGENTS.md`** standard for full-lifecycle AI coding workflows:
+- **`AGENTS.md`**: Single source of truth for architectural principles, testing rules, and runbooks.
+- **`CLAUDE.md`**: Pointers for Claude Code CLI.
+- **`.github/copilot-instructions.md`**: Pointers for GitHub Copilot.
+- **`.cursor/rules/enquota.mdc`**: Path-scoped rules for Cursor IDE.
+- **`GEMINI.md`**: Pointers for Gemini CLI.
+
+---
+
+## 📖 Detailed Technical Specification
+
+For in-depth documentation regarding reverse-engineered carrier cryptography, signature schemas, WAF handling, and CXOS HMAC decryption, see the [Technical Specification (docs/TECHSPEC.md)](docs/TECHSPEC.md).
 
 ---
 

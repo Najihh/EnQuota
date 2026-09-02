@@ -1,0 +1,48 @@
+name: "🐛 Bug Report"
+description: Report an issue or unexpected behavior in EnQuota
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the form below to help us investigate.
+  - type: input
+    id: operator
+    attributes:
+      label: Telco Operator / Brand
+      description: Which operator were you using when the bug occurred?
+      placeholder: "e.g. Tri (bima+), Indosat (myIM3), Telkomsel, by.U"
+    validations:
+      required: true
+  - type: input
+    id: phone_prefix
+    attributes:
+      label: Phone Prefix
+      description: First 4 digits of the phone number (do not include full private number).
+      placeholder: "e.g. 0896, 0857, 0812, 0851"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear explanation of what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact commands or MCP tool calls executed.
+      placeholder: |
+        1. Run `enquota login 0896xxxx`
+        2. Enter OTP `123456`
+        3. Call `eq_get_quota`
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Terminal Output
+      description: Paste any error messages (please redact sensitive tokens or private numbers).
+      render: shell
