@@ -379,10 +379,29 @@ export class TelkomselProvider extends TelcoProvider {
         payment_method: paymentMethod.toLowerCase()
       });
 
+      let orderId: string | undefined;
+      let qrisUrl: string | undefined;
+
+      if (typeof res === 'string') {
+        const orderMatch = res.match(/🆔\s*Order ID:\s*`([^`]+)`/);
+        if (orderMatch) orderId = orderMatch[1].trim();
+
+        const qrMatch = res.match(/📱\s*\*Scan QR to pay \(QRIS\):\*\s*\n([^\n]+)/);
+        if (qrMatch) qrisUrl = qrMatch[1].trim();
+      } else if (typeof res === 'object' && res !== null) {
+        orderId = res.order_id || res.orderid || res.OrderID;
+        qrisUrl = res.qr_url || res.qrURL || res.QRURL;
+      }
+
+      const isPulsa = paymentMethod.toLowerCase() === 'pulsa';
+
       return {
         success: true,
+        transactionId: orderId,
         paymentMethod,
-        status: paymentMethod.toLowerCase() === 'pulsa' ? 'SUCCESS' : 'PENDING',
+        status: isPulsa ? 'SUCCESS' : 'PENDING',
+        qrisData: qrisUrl,
+        checkoutUrl: qrisUrl,
         message: typeof res === 'string' ? res : (res?.message || 'Telkomsel package purchase request sent!'),
         raw: res
       };
