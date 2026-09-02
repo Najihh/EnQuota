@@ -68,12 +68,40 @@ jobs:
           path: release-artifacts
           merge-multiple: true
 
+      - name: Generate Release Body
+        run: |
+          cat << 'EOF' > release_body.md
+          ## 🚀 EnQuota Release ${{ steps.pkg_version.outputs.version }}
+
+          Unified Indonesian Telco MCP Server & CLI Toolkit with Smart ISP Prefix Detection.
+
+          ### 📦 Standalone Native Binaries
+          - **Linux (x86_64)**: \`enquota-linux-amd64\`
+          - **Linux (ARM64)**: \`enquota-linux-arm64\`
+          - **macOS (Apple Silicon)**: \`enquota-darwin-arm64\`
+          - **macOS (Intel)**: \`enquota-darwin-amd64\`
+          - **Windows (x64)**: \`enquota-windows-amd64.exe\`
+
+          ### 💻 One-Liner Quick Install
+          ```bash
+          # Linux & macOS
+          curl -fsSL https://raw.githubusercontent.com/Najihh/EnQuota/release/install.sh | bash
+
+          # Windows (PowerShell)
+          irm https://raw.githubusercontent.com/Najihh/EnQuota/release/install.ps1 | iex
+          ```
+
+          ---
+          📖 **Technical Specification**: [docs/TECHSPEC.md](docs/TECHSPEC.md)  
+          🤖 **Agentic Guidelines**: [AGENTS.md](AGENTS.md)
+          EOF
+
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.pkg_version.outputs.version }}
-          name: Release ${{ steps.pkg_version.outputs.version }}
+          name: EnQuota ${{ steps.pkg_version.outputs.version }}
+          body_path: release_body.md
           files: release-artifacts/*
           draft: false
           prerelease: false
-          generate_release_notes: true
