@@ -20,7 +20,7 @@
   - 🎁 Loyalty Points Dashboard (BonsTri, IMPoin, Telkomsel Poin, uCoin).
   - 🛒 Catalog Explorer & Personalized CVM/Promo Search.
   - 💳 Airtime Pulsa Auto-Deduct & Instant QRIS payment generation.
-- **Standalone Native Binaries**: Precompiled single executables available for Linux (x64/ARM64), macOS (Apple Silicon/Intel), and Windows.
+- **Cross-Platform Standalone Binaries**: Precompiled single executables available for Linux (x64/ARM64), macOS (Apple Silicon/Intel), and Windows.
 
 ---
 
@@ -55,57 +55,126 @@ When running as an MCP server, `EnQuota` exposes the following unified tools pre
 
 ---
 
-## 🚀 Installation & Usage
+## 💻 Installation (All Platforms)
 
-### 1. Interactive CLI Mode
+### Option 1: Automatic One-Liner Installer (Recommended)
 
+#### Linux & macOS:
 ```bash
-# Clone repository
+curl -fsSL https://raw.githubusercontent.com/Najihh/EnQuota/main/install.sh | bash
+```
+
+#### Windows (PowerShell as Administrator or User):
+```powershell
+irm https://raw.githubusercontent.com/Najihh/EnQuota/main/install.ps1 | iex
+```
+
+---
+
+### Option 2: Precompiled Standalone Binaries (Zero Dependencies)
+
+Download the executable matching your operating system and architecture directly from the [Releases](https://github.com/Najihh/EnQuota/releases) page:
+
+| Operating System | Architecture | Download & Installation Command |
+| :--- | :--- | :--- |
+| **Linux** | x86_64 / AMD64 | `curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-linux-amd64 -o enquota && chmod +x enquota && sudo mv enquota /usr/local/bin/` |
+| **Linux** | ARM64 / AArch64 / Raspberry Pi | `curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-linux-arm64 -o enquota && chmod +x enquota && sudo mv enquota /usr/local/bin/` |
+| **macOS** | Apple Silicon (M1/M2/M3/M4) | `curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-darwin-arm64 -o enquota && chmod +x enquota && sudo mv enquota /usr/local/bin/` |
+| **macOS** | Intel x86_64 | `curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-darwin-amd64 -o enquota && chmod +x enquota && sudo mv enquota /usr/local/bin/` |
+| **Windows** | x86_64 (64-bit) | Download `enquota-windows-amd64.exe` from Releases and add to your PATH. |
+
+---
+
+### Option 3: Manual Source Installation
+
+#### Via Node.js & npm:
+```bash
+# 1. Clone repository
 git clone https://github.com/Najihh/EnQuota.git
 cd EnQuota
 
-# Install dependencies & build
+# 2. Install dependencies & compile TypeScript
 npm install
 npm run build
 
-# Detect ISP from number
-node dist/index.js detect 089612345678
-
-# Interactive Login
-node dist/index.js login 089612345678
-
-# Check Quota
-node dist/index.js quota
-
-# List active sessions
-node dist/index.js sessions
+# 3. Link globally
+npm link
 ```
 
-### 2. Standalone Binary Installation
-
-Download the latest prebuilt executable from the [Releases](https://github.com/Najihh/EnQuota/releases) page:
-
+#### Via Bun (Native TS Engine):
 ```bash
-# Linux x64
-curl -L https://github.com/Najihh/EnQuota/releases/latest/download/enquota-linux-amd64 -o enquota
-chmod +x enquota
-sudo mv enquota /usr/local/bin/
-
-# Run CLI or MCP
-enquota --mcp
+git clone https://github.com/Najihh/EnQuota.git
+cd EnQuota
+bun install
+bun run build
 ```
 
-### 3. Hermes Agent MCP Configuration
+#### Quick Run with npx (No Install):
+```bash
+npx -y enquota --help
+npx -y enquota detect 089612345678
+```
 
-Add `enquota` to your `~/.hermes/config.yaml`:
+---
+
+## ⚡ MCP Client Integration Setup
+
+### 1. Hermes Agent (`~/.hermes/config.yaml`)
 
 ```yaml
 mcp_servers:
   enquota:
-    command: /usr/local/bin/enquota # or: node /path/to/EnQuota/dist/index.js
+    command: enquota # or: node /path/to/EnQuota/dist/index.js
     args:
       - --mcp
     enabled: true
+```
+
+### 2. Claude Desktop (`claude_desktop_config.json`)
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "enquota": {
+      "command": "enquota",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+### 3. Cursor IDE (`.cursor/mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "enquota": {
+      "command": "enquota",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+---
+
+## 🎮 Interactive CLI Usage Examples
+
+```bash
+# 1. Detect ISP and brand from phone number
+enquota detect 089612345678
+
+# 2. Login via SMS OTP
+enquota login 089612345678
+
+# 3. Check active internet quotas
+enquota quota
+
+# 4. View all saved multi-SIM sessions
+enquota sessions
 ```
 
 ---
