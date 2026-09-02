@@ -207,5 +207,5 @@ Semua token dan kredensial sesi disimpan secara lokal di `~/.enquota/sessions.js
 
 ## 📄 Lisensi & Kredit
 
-- Fondasi reverse engineering terinspirasi dari [kupas700bawang](https://github.com/Najihh/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
+- Fondasi reverse engineering terinspirasi dari [kupas700bawang](https://github.com/idlanyor/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
 - Dilisensikan di bawah **MIT License**.

@@ -209,6 +209,14 @@ const TOOLS: Tool[] = [
       },
       required: ['phone']
     }
+  },
+  {
+    name: 'eq_help',
+    description: 'Show EnQuota full usage guide, MCP tool catalog, carrier prefix matrix, and workflow examples.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
   }
 ];
 
@@ -352,6 +360,42 @@ export function createMcpServer(): Server {
           const removed = defaultSessionManager.removeSession(phone);
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: removed, message: removed ? `Session for ${phone} cleared.` : `No session found for ${phone}.` }, null, 2) }]
+          };
+        }
+
+        case 'eq_help': {
+          const guide = {
+            name: "EnQuota",
+            version: "1.0.0",
+            description: "Unified Indonesian Telco MCP Server & Toolkit (Tri, Indosat, Telkomsel, by.U)",
+            prefixMatrix: {
+              "TRI (bima+)": ["0895", "0896", "0897", "0898", "0899"],
+              "INDOSAT (myIM3)": ["0814", "0815", "0816", "0855", "0856", "0857", "0858"],
+              "TELKOMSEL (MyTelkomsel)": ["0811", "0812", "0813", "0821", "0822", "0823", "0852", "0853"],
+              "TELKOMSEL by.U": ["0851"]
+            },
+            tools: {
+              "eq_detect_isp": "Detects operator, brand, prefix, and engine from a phone number.",
+              "eq_login": "Initiates SMS OTP login (auto-detects ISP from prefix).",
+              "eq_submit_otp": "Validates 6-digit OTP code and persists SIM session.",
+              "eq_get_profile": "Retrieves subscriber name, SIM active date, balance, and loyalty points.",
+              "eq_get_quota": "Retrieves active data, app, and roaming quota balances and validities.",
+              "eq_get_packages": "Searches or browses package catalog and CVM personalized promo deals.",
+              "eq_buy_package": "Buys data plan (auto-deduct Pulsa or instant QRIS).",
+              "eq_topup_pulsa": "Recharges SIM credit via official denominations & QRIS.",
+              "eq_list_sessions": "Lists all active SIM sessions saved in local keystore.",
+              "eq_logout": "Removes a stored SIM session."
+            },
+            typicalWorkflow: [
+              "1. eq_login(phone='0896xxxxxxx') -> Receives SMS OTP",
+              "2. eq_submit_otp(otp='123456', phone='0896xxxxxxx') -> Saves session",
+              "3. eq_get_quota(phone='0896xxxxxxx') -> Checks active quotas",
+              "4. eq_get_packages(keyword='30 hari') -> Browses monthly packages",
+              "5. eq_buy_package(package_id='...', payment_method='PULSA') -> Purchases package"
+            ]
+          };
+          return {
+            content: [{ type: 'text', text: JSON.stringify(guide, null, 2) }]
           };
         }
 

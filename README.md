@@ -206,5 +206,5 @@ All tokens and session credentials are encrypted and stored locally under `~/.en
 
 ## 📄 License & Credits
 
-- Reverse engineering foundations inspired by [kupas700bawang](https://github.com/Najihh/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
+- Reverse engineering foundations inspired by [kupas700bawang](https://github.com/idlanyor/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
 - Licensed under the **MIT License**.
