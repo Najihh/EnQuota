@@ -261,7 +261,7 @@ export class IndosatProvider extends TelcoProvider {
       const prof = profRes.body?.data;
 
       const fullName = [prof?.fname, prof?.lname].filter(Boolean).join(' ') || prof?.uname || prof?.name || 'IM3 Subscriber';
-      const balanceNum = dash?.prepaidinfo?.balance != null ? Number(dash.prepaidinfo.balance) : 0;
+      const balanceNum = dash?.prepaidinfo?.balance != null ? Number(dash.prepaidinfo.balance) : (dash?.packdata?.lastbalance != null ? Number(dash.packdata.lastbalance) : 0);
       const activeUntil = dash?.cardactiveuntil || dash?.prepaidinfo?.cardactiveuntil || '-';
       const impoin = Number(dash?.impoinDetails?.totalPoints || dash?.impoints?.value || 0);
 
@@ -276,7 +276,7 @@ export class IndosatProvider extends TelcoProvider {
         loyaltyPoints: {
           name: 'IMPoin',
           points: impoin,
-          tier: prof?.segment || 'Regular'
+          tier: prof?.currenttier || prof?.segment || 'Regular'
         },
         raw: { dash, prof }
       };
@@ -306,12 +306,32 @@ export class IndosatProvider extends TelcoProvider {
       const dash = dashRes.body?.data;
       const packages = dash?.packdata?.packageslist || dash?.packageslist || [];
 
-      const items: QuotaItem[] = (Array.isArray(packages) ? packages : []).map((p: any) => ({
-        name: p.packagename || p.name || 'Freedom Internet',
-        type: 'MAIN',
-        remainingFormatted: p.total_quota || p.quota || '0 GB',
-        validUntil: p.expireddate || p.activeuntil || '-'
-      }));
+      const items: QuotaItem[] = [];
+      if (Array.isArray(packages)) {
+        packages.forEach((pkg: any) => {
+          if (Array.isArray(pkg.Quotas)) {
+            pkg.Quotas.forEach((q: any) => {
+              if (q.benefitType === 'DATA' || q.benefitType === 'INTERNET' || q.quotaUnit === 'MB' || q.quotaUnit === 'GB') {
+                items.push({
+                  name: q.name || q.description || pkg.ServiceName || 'Paket Internet',
+                  type: 'MAIN',
+                  remainingFormatted: q.remainingQuota ? `${q.remainingQuota} ${q.quotaUnit || 'MB'}` : (q.rawRemainingQuota ? `${q.rawRemainingQuota} MB` : '0 MB'),
+                  validUntil: pkg.EndDate || '-'
+                });
+              }
+            });
+          }
+        });
+      }
+
+      if (items.length === 0) {
+        items.push({
+          name: 'Freedom Internet',
+          type: 'MAIN',
+          remainingFormatted: '0 GB (Habis)',
+          validUntil: dash?.prepaidinfo?.cardactiveuntil || '-'
+        });
+      }
 
       return {
         success: true,
@@ -336,49 +356,34 @@ export class IndosatProvider extends TelcoProvider {
     try {
       if (!this.session?.authToken) await this.initGuest();
 
-      if (keyword) {
-        const searchRes = await this.request('/package/search/v1', {
-          keyword: keyword.trim(),
-          page: 1,
-          limit: 25
-        });
+      const term = (keyword || 'freedom').trim();
+      const searchRes = await this.request('/packages/search', {
+        SEARCH_TERM: term,
+        servicename: 'GET PACKAGE'
+      });
 
-        const list = searchRes.body?.data?.packages || searchRes.body?.data || [];
-        const packages: PackageItem[] = (Array.isArray(list) ? list : []).map((p: any) => ({
-          id: p.pvr_code || p.product_id || p.offerid || p.id,
-          name: p.package_name || p.name || p.title,
-          price: Number(p.tariff || p.price || 0),
-          priceFormatted: `Rp ${Number(p.tariff || p.price || 0).toLocaleString('id-ID')}`,
-          quotaFormatted: p.quota || p.total_quota,
-          validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
-          description: p.description,
-          category: 'Search Freedom'
-        }));
-
-        return {
-          success: true,
-          provider: 'INDOSAT',
-          packages,
-          raw: searchRes.body
-        };
-      }
-
-      const modRes = await this.request('/pages/getmodules', { name: 'myim3-home' });
-      const modules = modRes.body?.data || [];
+      const cats = searchRes.body?.data?.commercial_package_category || [];
       const packages: PackageItem[] = [];
+      const seenPvr = new Set<string>();
 
-      modules.forEach((m: any) => {
-        if (Array.isArray(m.packages)) {
-          m.packages.forEach((p: any) => {
-            packages.push({
-              id: p.pvr_code || p.product_id || p.offerid || p.id,
-              name: p.package_name || p.name,
-              price: Number(p.tariff || p.price || 0),
-              priceFormatted: `Rp ${Number(p.tariff || p.price || 0).toLocaleString('id-ID')}`,
-              quotaFormatted: p.quota || p.total_quota,
-              validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
-              category: m.title || m.name
-            });
+      cats.forEach((c: any) => {
+        if (Array.isArray(c.commercial_package)) {
+          c.commercial_package.forEach((p: any) => {
+            const pvr = p.pvr_code || p.package_id || p.id;
+            if (pvr && !seenPvr.has(pvr)) {
+              seenPvr.add(pvr);
+              const price = Number(p.tariff != null ? p.tariff : (p.original_tariff || 0));
+              packages.push({
+                id: pvr,
+                name: p.package_name || p.name,
+                price,
+                priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+                quotaFormatted: p.commercial_attribute?.short_benefit || p.commercial_attribute?.benefit_type || p.benefit,
+                validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
+                description: p.commercial_attribute?.description || p.description,
+                category: c.category_name || c.category || 'Freedom'
+              });
+            }
           });
         }
       });
@@ -387,7 +392,7 @@ export class IndosatProvider extends TelcoProvider {
         success: true,
         provider: 'INDOSAT',
         packages,
-        raw: modules
+        raw: searchRes.body
       };
     } catch (e: any) {
       return {
