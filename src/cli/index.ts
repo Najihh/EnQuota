@@ -39,6 +39,7 @@ export function createCli(): Command {
 
       console.log(chalk.bold.yellow('\n--- Hasil Deteksi ISP EnQuota ---'));
       console.log(table.toString());
+      process.exit(0);
     });
 
   program
@@ -78,13 +79,18 @@ export function createCli(): Command {
           if (valRes.success && valRes.session) {
             defaultSessionManager.saveSession(valRes.session, true);
             console.log(chalk.bold.green(`\nLogin Berhasil! Sesi tersimpan untuk ${valRes.session.phone} (${provider.brand})`));
+            process.exit(0);
           } else {
             console.log(chalk.red(`Validasi gagal: ${valRes.message}`));
+            process.exit(1);
           }
+        } else {
+          process.exit(0);
         }
       } catch (err: any) {
         spinner.stop();
         console.log(chalk.red(`Error: ${err.message}`));
+        process.exit(1);
       }
     });
 
@@ -95,7 +101,7 @@ export function createCli(): Command {
       const sessions = defaultSessionManager.listSessions();
       if (sessions.length === 0) {
         console.log(chalk.yellow('\nBelum ada sesi SIM tersimpan. Gunakan `enquota login <nomor>` untuk menghubungkan nomor.'));
-        return;
+        process.exit(0);
       }
 
       const table = new Table({
@@ -115,6 +121,7 @@ export function createCli(): Command {
 
       console.log(chalk.bold.yellow('\n--- Daftar Sesi SIM Tersimpan ---'));
       console.log(table.toString());
+      process.exit(0);
     });
 
   program
@@ -146,9 +153,11 @@ export function createCli(): Command {
           });
           console.log(table.toString());
         }
+        process.exit(0);
       } catch (e: any) {
         spinner.stop();
         console.log(chalk.red(`Error: ${e.message}`));
+        process.exit(1);
       }
     });
 
