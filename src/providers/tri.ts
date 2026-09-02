@@ -396,19 +396,72 @@ export class TriProvider extends TelcoProvider {
       const modRes = await this.request('/pages/getmodules', { name: 'bima-home' });
       const modules = modRes.body?.data || [];
       const packages: PackageItem[] = [];
+      const seenIds = new Set<string>();
+
+      // Fetch CVM Personal Offers if subscriber session is active
+      if (this.session?.userType === 'SUBSCRIBER') {
+        try {
+          const cvmRes = await this.request('/dmp/personalization/cvmoffers', {});
+          const cvmList = cvmRes.body?.data?.commercial_package || [];
+          cvmList.forEach((p: any) => {
+            const id = p.pvr_code || p.offerid || p.product_id || p.id;
+            if (id && !seenIds.has(id)) {
+              seenIds.add(id);
+              const price = Number(p.tariff != null ? p.tariff : (p.price || 0));
+              packages.push({
+                id,
+                name: p.package_name || p.name,
+                price,
+                priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+                quotaFormatted: p.commercial_attribute?.total_data_quota || p.package_subtitle || p.quota,
+                validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
+                description: p.commercial_attribute?.description || p.description,
+                category: 'Hanya Untukmu (Spesial CVM)',
+                isPromo: true
+              });
+            }
+          });
+        } catch {}
+
+        try {
+          const packRes = await this.request('/personalization/packs', {});
+          const pList = packRes.body?.data?.commercial_package || [];
+          pList.forEach((p: any) => {
+            const id = p.pvr_code || p.offerid || p.product_id || p.id;
+            if (id && !seenIds.has(id)) {
+              seenIds.add(id);
+              const price = Number(p.tariff != null ? p.tariff : (p.price || 0));
+              packages.push({
+                id,
+                name: p.package_name || p.name,
+                price,
+                priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+                quotaFormatted: p.commercial_attribute?.total_data_quota || p.package_subtitle || p.quota,
+                validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
+                category: 'Spesial Untukmu',
+                isPromo: true
+              });
+            }
+          });
+        } catch {}
+      }
 
       modules.forEach((m: any) => {
         if (Array.isArray(m.packages)) {
           m.packages.forEach((p: any) => {
-            packages.push({
-              id: p.pvr_code || p.product_id || p.offerid || p.id,
-              name: p.package_name || p.name,
-              price: Number(p.tariff || p.price || 0),
-              priceFormatted: `Rp ${Number(p.tariff || p.price || 0).toLocaleString('id-ID')}`,
-              quotaFormatted: p.quota || p.total_quota,
-              validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
-              category: m.title || m.name
-            });
+            const id = p.pvr_code || p.product_id || p.offerid || p.id;
+            if (id && !seenIds.has(id)) {
+              seenIds.add(id);
+              packages.push({
+                id,
+                name: p.package_name || p.name,
+                price: Number(p.tariff || p.price || 0),
+                priceFormatted: `Rp ${Number(p.tariff || p.price || 0).toLocaleString('id-ID')}`,
+                quotaFormatted: p.quota || p.total_quota,
+                validityFormatted: p.validity ? `${p.validity} Hari` : undefined,
+                category: m.title || m.name
+              });
+            }
           });
         }
       });
