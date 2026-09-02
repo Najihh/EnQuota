@@ -15,7 +15,7 @@ import { resolveProvider } from '../providers/index.js';
 
 const TOOLS: Tool[] = [
   {
-    name: 'telco_detect_isp',
+    name: 'eq_detect_isp',
     description: 'Detect Indonesian Telco operator, brand, prefix, and engine compatibility from a phone number (Tri, Indosat, Telkomsel, by.U, XL, AXIS, Smartfren).',
     inputSchema: {
       type: 'object',
@@ -29,7 +29,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_login',
+    name: 'eq_login',
     description: 'Initiate SMS OTP login for an Indonesian SIM card. Automatically detects the ISP from prefix and triggers the OTP request.',
     inputSchema: {
       type: 'object',
@@ -48,7 +48,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_submit_otp',
+    name: 'eq_submit_otp',
     description: 'Submit the 6-digit SMS OTP code to complete authentication and persist the SIM session.',
     inputSchema: {
       type: 'object',
@@ -63,14 +63,14 @@ const TOOLS: Tool[] = [
         },
         trans_id: {
           type: 'string',
-          description: 'Optional transaction ID returned by telco_login'
+          description: 'Optional transaction ID returned by eq_login'
         }
       },
       required: ['otp']
     }
   },
   {
-    name: 'telco_get_profile',
+    name: 'eq_get_profile',
     description: 'Get SIM profile, subscriber name, credit balance, card validity date, and loyalty points (BonsTri, IMPoin, Telkomsel Poin, uCoin).',
     inputSchema: {
       type: 'object',
@@ -88,7 +88,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_get_quota',
+    name: 'eq_get_quota',
     description: 'Get all active internet, local, app, and roaming quota balances and expiration dates.',
     inputSchema: {
       type: 'object',
@@ -106,7 +106,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_get_packages',
+    name: 'eq_get_packages',
     description: 'Explore and search available internet package catalogs, special CVM promo offers, and toppings.',
     inputSchema: {
       type: 'object',
@@ -132,7 +132,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_buy_package',
+    name: 'eq_buy_package',
     description: 'Purchase an internet package by deducting airtime pulsa balance or generating an instant QRIS payment.',
     inputSchema: {
       type: 'object',
@@ -161,7 +161,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_topup_pulsa',
+    name: 'eq_topup_pulsa',
     description: 'Top-up SIM credit / pulsa balance via official denominations and QRIS.',
     inputSchema: {
       type: 'object',
@@ -189,7 +189,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_list_sessions',
+    name: 'eq_list_sessions',
     description: 'List all currently active and saved SIM sessions across all telco providers.',
     inputSchema: {
       type: 'object',
@@ -197,7 +197,7 @@ const TOOLS: Tool[] = [
     }
   },
   {
-    name: 'telco_logout',
+    name: 'eq_logout',
     description: 'Logout and remove a stored SIM session.',
     inputSchema: {
       type: 'object',
@@ -236,7 +236,7 @@ export function createMcpServer(): Server {
 
     try {
       switch (name) {
-        case 'telco_detect_isp': {
+        case 'eq_detect_isp': {
           const phone = String(args.phone || '');
           const info = detectIsp(phone);
           return {
@@ -244,7 +244,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_login': {
+        case 'eq_login': {
           const phone = String(args.phone || '');
           const providerParam = args.provider ? String(args.provider) : undefined;
           const { provider } = resolveProvider({ phone, provider: providerParam });
@@ -267,7 +267,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_submit_otp': {
+        case 'eq_submit_otp': {
           const otp = String(args.otp || '');
           const phone = args.phone ? String(args.phone) : undefined;
           const transId = args.trans_id ? String(args.trans_id) : undefined;
@@ -284,7 +284,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_get_profile': {
+        case 'eq_get_profile': {
           const phone = args.phone ? String(args.phone) : undefined;
           const providerParam = args.provider ? String(args.provider) : undefined;
           const { provider } = resolveProvider({ phone, provider: providerParam });
@@ -294,7 +294,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_get_quota': {
+        case 'eq_get_quota': {
           const phone = args.phone ? String(args.phone) : undefined;
           const providerParam = args.provider ? String(args.provider) : undefined;
           const { provider } = resolveProvider({ phone, provider: providerParam });
@@ -304,7 +304,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_get_packages': {
+        case 'eq_get_packages': {
           const keyword = args.keyword ? String(args.keyword) : undefined;
           const category = args.category ? String(args.category) : undefined;
           const phone = args.phone ? String(args.phone) : undefined;
@@ -316,7 +316,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_buy_package': {
+        case 'eq_buy_package': {
           const packageId = String(args.package_id || '');
           const paymentMethod = args.payment_method ? String(args.payment_method) : 'PULSA';
           const phone = args.phone ? String(args.phone) : undefined;
@@ -328,7 +328,7 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_topup_pulsa': {
+        case 'eq_topup_pulsa': {
           const amount = Number(args.amount || 0);
           const paymentMethod = args.payment_method ? String(args.payment_method) : 'QRIS';
           const phone = args.phone ? String(args.phone) : undefined;
@@ -340,14 +340,14 @@ export function createMcpServer(): Server {
           };
         }
 
-        case 'telco_list_sessions': {
+        case 'eq_list_sessions': {
           const sessions = defaultSessionManager.listSessions();
           return {
             content: [{ type: 'text', text: JSON.stringify({ count: sessions.length, sessions }, null, 2) }]
           };
         }
 
-        case 'telco_logout': {
+        case 'eq_logout': {
           const phone = String(args.phone || '');
           const removed = defaultSessionManager.removeSession(phone);
           return {

@@ -8,7 +8,7 @@
 ## 🌟 Key Features
 
 - **Smart Prefix Auto-Routing**: Automatically identifies the provider from the phone number prefix (`0896` ➔ Tri, `0857` ➔ Indosat, `0812` ➔ Telkomsel, `0851` ➔ by.U).
-- **Multi-ISP Unified MCP Tools**: One clean interface (`telco_login`, `telco_get_quota`, `telco_get_profile`, `telco_buy_package`) for all telcos.
+- **Multi-ISP Unified MCP Tools**: One clean interface (`eq_login`, `eq_get_quota`, `eq_get_profile`, `eq_buy_package`) for all telcos.
 - **Multi-Account Session Keystore**: Manage and persist sessions across multiple numbers and operators locally in `~/.enquota/sessions.json`.
 - **Full Telco API Capabilities**:
   - 📊 Real-time Quota & Balance Checks (Main, Local, App, Night, Roaming).
@@ -36,16 +36,16 @@ When running as an MCP server, `EnQuota` exposes the following unified tools:
 
 | Tool | Parameters | Description |
 | :--- | :--- | :--- |
-| `telco_detect_isp` | `phone` | Identifies ISP provider, brand, prefix, and engine compatibility. |
-| `telco_login` | `phone`, `provider?` | Starts SMS OTP authentication for the specified SIM card. |
-| `telco_submit_otp` | `otp`, `phone?`, `trans_id?` | Validates 6-digit OTP code and caches session token. |
-| `telco_get_profile` | `phone?`, `provider?` | Retrieves subscriber name, SIM active date, balance, and loyalty points. |
-| `telco_get_quota` | `phone?`, `provider?` | Retrieves all active data, app, and roaming quota balances. |
-| `telco_get_packages` | `keyword?`, `category?`, `phone?` | Searches/lists available package catalogs and CVM promo deals. |
-| `telco_buy_package` | `package_id`, `payment_method?`, `phone?` | Buys data plan (auto-deduct Pulsa or instant QRIS). |
-| `telco_topup_pulsa` | `amount`, `payment_method?`, `phone?` | Recharges SIM credit via official denominations. |
-| `telco_list_sessions` | — | Lists all stored SIM sessions across providers. |
-| `telco_logout` | `phone` | Clears stored session for a given number. |
+| `eq_detect_isp` | `phone` | Identifies ISP provider, brand, prefix, and engine compatibility. |
+| `eq_login` | `phone`, `provider?` | Starts SMS OTP authentication for the specified SIM card. |
+| `eq_submit_otp` | `otp`, `phone?`, `trans_id?` | Validates 6-digit OTP code and caches session token. |
+| `eq_get_profile` | `phone?`, `provider?` | Retrieves subscriber name, SIM active date, balance, and loyalty points. |
+| `eq_get_quota` | `phone?`, `provider?` | Retrieves all active data, app, and roaming quota balances. |
+| `eq_get_packages` | `keyword?`, `category?`, `phone?` | Searches/lists available package catalogs and CVM promo deals. |
+| `eq_buy_package` | `package_id`, `payment_method?`, `phone?` | Buys data plan (auto-deduct Pulsa or instant QRIS). |
+| `eq_topup_pulsa` | `amount`, `payment_method?`, `phone?` | Recharges SIM credit via official denominations. |
+| `eq_list_sessions` | — | Lists all stored SIM sessions across providers. |
+| `eq_logout` | `phone` | Clears stored session for a given number. |
 
 ---
 
