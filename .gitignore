@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+.env
+.enquota/
+.sessions.json
+.DS_Store

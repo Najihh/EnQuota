@@ -1,0 +1,52 @@
+{
+  "name": "enquota",
+  "version": "1.0.0",
+  "description": "Unified Indonesian Telco MCP Server & Toolkit (Tri, Indosat, Telkomsel, by.U) with Smart ISP Prefix Detection",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "enquota": "./dist/index.js",
+    "enquota-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "mcp": "tsx src/index.ts --mcp",
+    "cli": "tsx src/index.ts --cli"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "indonesia",
+    "telco",
+    "telkomsel",
+    "indosat",
+    "tri",
+    "byu",
+    "bima-tri",
+    "myim3",
+    "quota",
+    "isp-detector"
+  ],
+  "author": "Najihh",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.1.0",
+    "inquirer": "^12.4.2",
+    "ora": "^8.2.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/qrcode": "^1.5.5",
+    "@types/qrcode-terminal": "^0.12.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
