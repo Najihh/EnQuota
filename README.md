@@ -8,6 +8,8 @@
 [![Technical Specification](https://img.shields.io/badge/Technical-Specification-orange.svg)](docs/TECHSPEC.md)
 [![Agentic Guidelines](https://img.shields.io/badge/Agentic-AGENTS.md-purple.svg)](AGENTS.md)
 
+> **🌐 Languages / Bahasa**: [🇮🇩 Indonesia](README.id-ID.md) · [🇬🇧 English](README.md)
+
 ---
 
 ## 🌟 Key Features
