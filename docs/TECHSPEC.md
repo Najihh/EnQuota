@@ -105,6 +105,27 @@ Smartfren (Future)            ➔ 0881 - 0889
 - **Engine**: Bridges the compiled native `telbot` binary via stdio JSON-RPC MCP channel.
 - **Fulfillment**: Parses order IDs and Midtrans QRIS URLs (`api.midtrans.com/v2/qris/.../qr-code`).
 
+### 3.5 XL Axiata & AXIS (`src/providers/xl.ts`)
+- **CIAM Gateway**: `https://gede.ciam.xlaxiata.co.id/realms/xl-ciam`
+- **Business API Gateway**: `https://api.myxl.xlaxiata.co.id`
+- **Authentication & Signatures**:
+  - **CIAM SMS OTP Request**: `GET /auth/otp?contact=628...&contactType=SMS&alternateContact=false` with Basic Auth.
+  - **CIAM OTP Submission**: `POST /protocol/openid-connect/token` with header `Ax-Api-Signature`:
+    $$\text{Ax-Api-Signature} = \text{Base64}(\text{HMAC-SHA256}(\text{tsForSign} + \text{"passwordSMS"} + \text{contact} + \text{otp} + \text{"openid"}, \text{AX\_API\_SIG\_KEY}))$$
+  - **Payload Encryption (`xdata`)**: Request bodies are encrypted using **AES-256-CBC** with PKCS7 padding and urlsafe Base64:
+    $$\text{IV} = \text{SHA256}(\text{xtimeMs})[:16]$$
+    $$\text{xdata} = \text{Base64UrlSafe}(\text{AES-256-CBC}_{\text{XDATA\_KEY}, \text{IV}}(\text{plaintext}))$$
+  - **API Request Signature (`x-signature`)**:
+    $$\text{keyStr} = \text{X\_API\_BASE\_SECRET} + \text{";"} + \text{idToken} + \text{";"} + \text{method} + \text{";"} + \text{path} + \text{";"} + \text{sigTimeSec}$$
+    $$\text{x-signature} = \text{HMAC-SHA512}(\text{idToken} + \text{";"} + \text{sigTimeSec} + \text{";"}, \text{keyStr})$$
+- **Purchase & Payment Flows**:
+  - `POST api/v8/xl-stores/options/detail` ➔ retrieves `token_confirmation` and item price.
+  - `POST misc/api/v8/utility/intercept-page` ➔ app intercept requirement.
+  - `POST payments/api/v8/payment-methods-option` ➔ retrieves `token_payment` & timestamp.
+  - `POST payments/api/v8/settlement-balance` ➔ auto-deduct pulsa.
+  - `POST payments/api/v8/settlement-multipayment/qris` ➔ initiates QRIS settlement; retrieves `transaction_code`.
+  - `POST payments/api/v8/pending-detail` ➔ returns raw EMVCo QRIS string.
+
 ---
 
 ## 4. Session Keystore & Storage Security

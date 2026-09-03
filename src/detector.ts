@@ -91,16 +91,16 @@ const PREFIX_MAP: Record<string, { provider: SupportedProvider; name: string; br
   '0851': { provider: 'BYU', name: 'Telkomsel by.U', brand: 'by.U', engine: 'Circles CXOS (pidaw-app.cx.byu.id)', supported: true },
 
   // --- XL AXIATA & AXIS ---
-  '0817': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'XL Gateway', supported: false },
-  '0818': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'XL Gateway', supported: false },
-  '0819': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'XL Gateway', supported: false },
-  '0859': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prioritas', engine: 'XL Gateway', supported: false },
-  '0877': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'XL Gateway', supported: false },
-  '0878': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'XL Gateway', supported: false },
-  '0831': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS', engine: 'AXISnet Gateway', supported: false },
-  '0832': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS', engine: 'AXISnet Gateway', supported: false },
-  '0833': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS', engine: 'AXISnet Gateway', supported: false },
-  '0838': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS', engine: 'AXISnet Gateway', supported: false },
+  '0817': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0818': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0819': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0859': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prioritas / Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0877': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0878': { provider: 'XL', name: 'XL Axiata', brand: 'XL Prabayar', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0831': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS (XL Axiata)', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0832': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS (XL Axiata)', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0833': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS (XL Axiata)', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
+  '0838': { provider: 'AXIS', name: 'AXIS', brand: 'AXIS (XL Axiata)', engine: 'myXL CIAM (api.myxl.xlaxiata.co.id)', supported: true },
 
   // --- SMARTFREN ---
   '0881': { provider: 'SMARTFREN', name: 'Smartfren', brand: 'Smartfren', engine: 'Smartfren Gateway', supported: false },
@@ -130,7 +130,7 @@ export function detectIsp(input: string, overrideProvider?: SupportedProvider): 
         national: norm.national,
         international: norm.international,
       },
-      isSupported: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'].includes(overrideProvider),
+      isSupported: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'].includes(overrideProvider),
       engine: 'Manual Override'
     };
   }

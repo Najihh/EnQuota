@@ -1,7 +1,7 @@
 # EnQuota 🇮🇩
 
 > **Unified Indonesian Telco MCP Server & Toolkit with Smart ISP Prefix Detection**  
-> Manage, check quota, explore packages, top up, and purchase data plans across **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, and **by.U** via Model Context Protocol (MCP) and interactive CLI.
+> Manage, check quota, explore packages, top up, and purchase data plans across **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, **by.U**, and **XL Axiata / AXIS (myXL)** via Model Context Protocol (MCP) and interactive CLI.
 
 [![Build and Release](https://github.com/Najihh/EnQuota/actions/workflows/release.yml/badge.svg)](https://github.com/Najihh/EnQuota/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -34,7 +34,9 @@
 | **Indosat Ooredoo** | `myIM3` | `0814`-`0816`, `0855`-`0858` | `myim3api1.ioh.co.id` | TS01 WAF + OAuth Bearer |
 | **Telkomsel** | `MyTelkomsel` | `0811`-`0813`, `0821`-`0823`, `0852`-`0853` | `api.telkomsel.com` | Telbot Core Engine / RSA + AES |
 | **Telkomsel by.U** | `by.U` | `0851` | `pidaw-app.cx.byu.id` | Circles CXOS + HMAC-SHA256 Sign |
-| **XL / AXIS / Smartfren** | *Detected* | `0817`-`0819`, `0831`-`0838`, `0881`-`0889` | *Prefix detected; engine pluggable* |
+| **XL Axiata** | `myXL` | `0817`-`0819`, `0859`, `0877`, `0878` | `api.myxl.xlaxiata.co.id` | CIAM OAuth + AES-256-CBC xdata + HMAC-SHA512 |
+| **AXIS** | `myXL / AXIS` | `0831`-`0833`, `0838` | `api.myxl.xlaxiata.co.id` | CIAM OAuth + AES-256-CBC xdata + HMAC-SHA512 |
+| **Smartfren** | *Detected* | `0881`-`0889` | *Prefix detected; engine pluggable* |
 
 ---
 
@@ -54,6 +56,7 @@ When running as an MCP server, `EnQuota` exposes the following unified tools pre
 | `eq_topup_pulsa` | `amount`, `payment_method?`, `phone?` | Recharges SIM credit via official denominations. |
 | `eq_list_sessions` | — | Lists all stored SIM sessions across providers. |
 | `eq_logout` | `phone` | Clears stored session for a given number. |
+| `eq_help` | — | Shows EnQuota usage guide, MCP catalog, and prefix matrix. |
 
 ---
 
@@ -206,5 +209,5 @@ All tokens and session credentials are encrypted and stored locally under `~/.en
 
 ## 📄 License & Credits
 
-- Reverse engineering foundations inspired by [kupas700bawang](https://github.com/idlanyor/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
+- Reverse engineering foundations inspired by [kupas700bawang](https://github.com/idlanyor/kupas700bawang), [telbot](https://github.com/0xtbug/telbot), and [AxiataBot](https://github.com/aryhrlmbng/AxiataBot).
 - Licensed under the **MIT License**.

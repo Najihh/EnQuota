@@ -278,7 +278,9 @@ export function createCli(): Command {
       console.log('  • Indosat (myIM3)     : 0814, 0815, 0816, 0855, 0856, 0857, 0858');
       console.log('  • Telkomsel           : 0811, 0812, 0813, 0821, 0822, 0823, 0852, 0853');
       console.log('  • Telkomsel by.U      : 0851');
-      console.log('  • XL / AXIS / Smfren  : 0817-0819, 0831-0838, 0881-0889 (Terdeteksi)\n');
+      console.log('  • XL Axiata (myXL)    : 0817, 0818, 0819, 0859, 0877, 0878');
+      console.log('  • AXIS                : 0831, 0832, 0833, 0838');
+      console.log('  • Smartfren           : 0881-0889 (Terdeteksi)\n');
 
       console.log(chalk.bold.yellow('💻 DAFTAR PERINTAH CLI (COMMANDS):'));
       console.log('  ' + chalk.green('enquota detect <phone>') + '       Deteksi operator & brand dari nomor HP');

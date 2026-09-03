@@ -40,7 +40,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional manual ISP provider override (TRI, INDOSAT, TELKOMSEL, BYU)'
         }
       },
@@ -81,7 +81,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional ISP provider override'
         }
       }
@@ -99,7 +99,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional ISP provider override'
         }
       }
@@ -125,7 +125,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional ISP provider override'
         }
       }
@@ -153,7 +153,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional ISP provider override'
         }
       },
@@ -181,7 +181,7 @@ const TOOLS: Tool[] = [
         },
         provider: {
           type: 'string',
-          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU'],
+          enum: ['TRI', 'INDOSAT', 'TELKOMSEL', 'BYU', 'XL', 'AXIS'],
           description: 'Optional ISP provider override'
         }
       },
@@ -372,7 +372,9 @@ export function createMcpServer(): Server {
               "TRI (bima+)": ["0895", "0896", "0897", "0898", "0899"],
               "INDOSAT (myIM3)": ["0814", "0815", "0816", "0855", "0856", "0857", "0858"],
               "TELKOMSEL (MyTelkomsel)": ["0811", "0812", "0813", "0821", "0822", "0823", "0852", "0853"],
-              "TELKOMSEL by.U": ["0851"]
+              "TELKOMSEL by.U": ["0851"],
+              "XL AXIATA (myXL)": ["0817", "0818", "0819", "0859", "0877", "0878"],
+              "AXIS": ["0831", "0832", "0833", "0838"]
             },
             tools: {
               "eq_detect_isp": "Detects operator, brand, prefix, and engine from a phone number.",

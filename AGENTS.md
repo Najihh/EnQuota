@@ -6,7 +6,7 @@
 
 ## 1. Project Overview
 
-**EnQuota** is a high-performance, unified Indonesian Telco MCP Server and CLI Toolkit. It enables AI agents and command-line users to seamlessly manage, check quota, explore package catalogs, top up pulsa, and purchase data plans across **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, and **by.U** with zero-configuration **smart ISP prefix auto-routing**.
+**EnQuota** is a high-performance, unified Indonesian Telco MCP Server and CLI Toolkit. It enables AI agents and command-line users to seamlessly manage, check quota, explore package catalogs, top up pulsa, and purchase data plans across **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, **by.U**, and **XL Axiata / AXIS (myXL)** with zero-configuration **smart ISP prefix auto-routing**.
 
 ### Component Map
 
@@ -20,9 +20,10 @@
 | `src/providers/indosat.ts` | Indosat (myIM3) client: WAF cookies, SMS OTP, balance activation, Freedom catalog, QRIS reload. |
 | `src/providers/byu.ts` | Telkomsel by.U client: Circles.Life CXOS HMAC-SHA256 crypto, uCoin, catalog. |
 | `src/providers/telkomsel.ts` | Telkomsel client: Bridge to telbot engine, regex parsing for profile/quota/packages/QRIS. |
+| `src/providers/xl.ts` | XL Axiata & AXIS (myXL) client: CIAM OAuth, AES-256-CBC xdata encryption, HMAC-SHA512 signing, QRIS & balance purchases. |
 | `src/providers/index.ts` | Provider registry and dynamic factory (`resolveProvider`). |
 | `src/mcp/server.ts` | Model Context Protocol (MCP) server implementation (`@modelcontextprotocol/sdk`). |
-| `src/cli/index.ts` | Interactive Commander CLI interface (`detect`, `login`, `sessions`, `quota`). |
+| `src/cli/index.ts` | Interactive Commander CLI interface (`detect`, `login`, `sessions`, `quota`, `profile`, `packages`, `usage`). |
 | `docs/TECHSPEC.md` | Full architectural and cryptographic specification. |
 | `.github/workflows/release.yml` | Multi-target cross-compilation release pipeline (Bun compiler). |
 

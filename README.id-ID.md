@@ -1,7 +1,7 @@
 # EnQuota 🇮🇩
 
 > **Unified Indonesian Telco MCP Server & Toolkit dengan Smart ISP Prefix Detection**  
-> Kelola kartu SIM, cek kuota, jelajahi paket, isi pulsa, dan tembak paket data murah untuk **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, dan **by.U** langsung dari terminal & AI Agent (MCP).
+> Kelola kartu SIM, cek kuota, jelajahi paket, isi pulsa, dan tembak paket data murah untuk **Tri (bima+)**, **Indosat (myIM3)**, **Telkomsel (MyTelkomsel)**, **by.U**, dan **XL Axiata / AXIS (myXL)** langsung dari terminal & AI Agent (MCP).
 
 [![Build and Release](https://github.com/Najihh/EnQuota/actions/workflows/release.yml/badge.svg)](https://github.com/Najihh/EnQuota/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -35,7 +35,9 @@
 | **Indosat Ooredoo** | `myIM3` | `0814`-`0816`, `0855`-`0858` | `myim3api1.ioh.co.id` | TS01 WAF + OAuth Bearer |
 | **Telkomsel** | `MyTelkomsel` | `0811`-`0813`, `0821`-`0823`, `0852`-`0853` | `api.telkomsel.com` | Telbot Core Engine / RSA + AES |
 | **Telkomsel by.U** | `by.U` | `0851` | `pidaw-app.cx.byu.id` | Circles CXOS + HMAC-SHA256 Sign |
-| **XL / AXIS / Smartfren** | *Terdeteksi* | `0817`-`0819`, `0831`-`0838`, `0881`-`0889` | *Prefix terdeteksi; engine siap ditambahkan* |
+| **XL Axiata** | `myXL` | `0817`-`0819`, `0859`, `0877`, `0878` | `api.myxl.xlaxiata.co.id` | CIAM OAuth + AES-256-CBC xdata + HMAC-SHA512 |
+| **AXIS** | `myXL / AXIS` | `0831`-`0833`, `0838` | `api.myxl.xlaxiata.co.id` | CIAM OAuth + AES-256-CBC xdata + HMAC-SHA512 |
+| **Smartfren** | *Terdeteksi* | `0881`-`0889` | *Prefix terdeteksi; engine siap ditambahkan* |
 
 ---
 
@@ -55,6 +57,7 @@ Ketika dijalankan sebagai MCP server, `EnQuota` menyediakan tools terpadu beriku
 | `eq_topup_pulsa` | `amount`, `payment_method?`, `phone?` | Isi ulang pulsa via nominal resmi & QRIS. |
 | `eq_list_sessions` | — | Daftar semua sesi SIM yang tersimpan. |
 | `eq_logout` | `phone` | Hapus sesi kartu SIM. |
+| `eq_help` | — | Tampilkan panduan penggunaan, katalog MCP, dan matriks prefix. |
 
 ---
 
@@ -207,5 +210,5 @@ Semua token dan kredensial sesi disimpan secara lokal di `~/.enquota/sessions.js
 
 ## 📄 Lisensi & Kredit
 
-- Fondasi reverse engineering terinspirasi dari [kupas700bawang](https://github.com/idlanyor/kupas700bawang) & [telbot](https://github.com/0xtbug/telbot).
+- Fondasi reverse engineering terinspirasi dari [kupas700bawang](https://github.com/idlanyor/kupas700bawang), [telbot](https://github.com/0xtbug/telbot), dan [AxiataBot](https://github.com/aryhrlmbng/AxiataBot).
 - Dilisensikan di bawah **MIT License**.

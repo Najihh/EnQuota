@@ -7,6 +7,7 @@ import { TriProvider } from './tri.js';
 import { IndosatProvider } from './indosat.js';
 import { ByuProvider } from './byu.js';
 import { TelkomselProvider } from './telkomsel.js';
+import { XLProvider } from './xl.js';
 import { SupportedProvider, detectIsp, normalizePhone } from '../detector.js';
 import { SessionManager, defaultSessionManager } from '../session.js';
 
@@ -15,6 +16,7 @@ export * from './tri.js';
 export * from './indosat.js';
 export * from './byu.js';
 export * from './telkomsel.js';
+export * from './xl.js';
 
 export function createProvider(providerType: SupportedProvider, sessionManager: SessionManager = defaultSessionManager, phone?: string): TelcoProvider {
   const session = phone ? sessionManager.getSession(phone) : sessionManager.getSession();
@@ -28,6 +30,9 @@ export function createProvider(providerType: SupportedProvider, sessionManager: 
       return new ByuProvider(session);
     case 'TELKOMSEL':
       return new TelkomselProvider(session);
+    case 'XL':
+    case 'AXIS':
+      return new XLProvider(session);
     default:
       throw new Error(`Unsupported ISP provider: ${providerType}`);
   }
