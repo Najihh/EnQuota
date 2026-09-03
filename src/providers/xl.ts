@@ -550,7 +550,7 @@ export class XLProvider extends TelcoProvider {
           { unit: 'DAY', id: 'FIL_SEL_V', type: 'VALIDITY', items: [] }
         ],
         substype: 'PREPAID',
-        text_search: keyword || '',
+        text_search: keyword && keyword.trim().length > 0 ? keyword.trim() : 'Internet',
         lang: 'en'
       };
 
