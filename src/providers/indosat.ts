@@ -356,6 +356,38 @@ export class IndosatProvider extends TelcoProvider {
     try {
       if (!this.session?.authToken) await this.initGuest();
 
+      const packages: PackageItem[] = [];
+      const seenPvr = new Set<string>();
+
+      // 1. Fetch Personalized CVM Promos (Hanya Untukmu) if logged in
+      if (this.session?.userType === 'SUBSCRIBER') {
+        try {
+          const promoRes = await this.request('/personalization/packs', {});
+          const promoList = promoRes.body?.data?.commercial_package || [];
+          if (Array.isArray(promoList)) {
+            promoList.forEach((p: any) => {
+              const pvr = p.pvr_code || p.package_id || p.id;
+              if (pvr && !seenPvr.has(pvr)) {
+                seenPvr.add(pvr);
+                const price = Number(p.tariff != null ? p.tariff : (p.original_tariff || p.price || 0));
+                packages.push({
+                  id: pvr,
+                  name: p.package_name || p.name,
+                  price,
+                  priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+                  quotaFormatted: p.commercial_attribute?.total_data_quota || p.commercial_attribute?.short_benefit || p.package_subtitle || p.quota,
+                  validityFormatted: p.validity ? `${p.validity} Hari` : (p.commercial_attribute?.validity ? `${p.commercial_attribute.validity} Hari` : undefined),
+                  description: p.commercial_attribute?.description || p.description,
+                  category: 'Hanya Untukmu (Spesial CVM)',
+                  isPromo: true
+                });
+              }
+            });
+          }
+        } catch {}
+      }
+
+      // 2. Search Store Packages
       const term = (keyword || 'freedom').trim();
       const searchRes = await this.request('/packages/search', {
         SEARCH_TERM: term,
@@ -363,9 +395,6 @@ export class IndosatProvider extends TelcoProvider {
       });
 
       const cats = searchRes.body?.data?.commercial_package_category || [];
-      const packages: PackageItem[] = [];
-      const seenPvr = new Set<string>();
-
       cats.forEach((c: any) => {
         if (Array.isArray(c.commercial_package)) {
           c.commercial_package.forEach((p: any) => {
